@@ -10,12 +10,12 @@ This extension generates "breadcrumbs" in the web navigation sense ("Where am I?
 
 To activate the functionality of this extension include the following in your
 LocalSettings.php file:
- require_once('$IP/extensions/BreadCrumbs2.php');
+require_once('$IP/extensions/BreadCrumbs2.php');
 
 Offered to the community for any use whatsoever with no restrictions other
 than that credit be given to Eric Hartwell, at least in the source code,
 according to the Creative Commons Attribution 3.0 License.
-***/
+ ***/
 
 # Change these constants to customize your installation
 define ("DELIM", '@');							 // Delimiter/marker for parameters and keywords
@@ -23,17 +23,17 @@ define ("CRUMBPAGE", 'MediaWiki:Breadcrumbs');	 // Default is 'MediaWiki:Breadcr
 
 # Standard sanity check
 if ( !defined( 'MEDIAWIKI' ) ) {
-   echo( "This is an extension to the MediaWiki package and cannot be run standalone.\n" );
-   die( -1 );
+	echo( "This is an extension to the MediaWiki package and cannot be run standalone.\n" );
+	die( -1 );
 }
 
 # Credits for Special:Version
 $wgExtensionCredits['other'][] = array(
-		'name' => 'BreadCrumbs2',
-		'version' => '0.9',
-		'author' => 'Eric Hartwell',
-		'url' => 'https://www.mediawiki.org/wiki/Extension:BreadCrumbs2',
-		'description' => 'Implements a Breadcrumb navigation based on categories'
+	'name' => 'BreadCrumbs2',
+	'version' => '0.9',
+	'author' => 'Eric Hartwell',
+	'url' => 'https://www.mediawiki.org/wiki/Extension:BreadCrumbs2',
+	'description' => 'Implements a Breadcrumb navigation based on categories'
 );
 
 $wgResourceModules['ext.breadcrumbs2'] = array(
@@ -63,6 +63,30 @@ function buildBreadcrumbs( $skin, $template ) {
 
 	# Get the list of categories for the current page
 	$categories = $skin->getOutput()->getCategories();
+
+	$categoriesTree = $skin->getTitle()->getParentCategoryTree();
+	$categoriesTree = explode( "\n", $skin->drawCategoryBrowser( $categoriesTree ) );
+
+	unset($categoriesTree[0]);
+	asort($categoriesTree);
+	$crumbs = array_values($categoriesTree);
+
+	if ( empty( $crumbs ) ) {
+		return true;
+	}
+
+	$title = $skin->getRelevantTitle();
+
+	$breadcrumb = '';
+	foreach ($crumbs as $line)
+		$breadcrumb .= trim($line) . ' > ';
+
+	$breadcrumb .= $title->getText();
+
+	$breadcrumbHTML =  Xml::openElement( 'div', array ( 'id' => 'breadcrumbs2' ) ) . $breadcrumb . Xml::closeElement( 'div' );
+	$skin->getOutput()->prependHTML( $breadcrumbHTML );
+
+	return true;
 
 	$title = $skin->getRelevantTitle();
 
@@ -94,7 +118,7 @@ function buildBreadcrumbs( $skin, $template ) {
 		# This is especially useful for skins that display the sidebar as a tab bar.
 		if ( method_exists( $template, 'setActiveSidebarLink' ) ) {
 			# The DynamicSkin extension can build the tabs (sidebar) dynamically,
-			# and not necessarily from $template->data['sidebar'], so DynamicSkin 
+			# and not necessarily from $template->data['sidebar'], so DynamicSkin
 			# and derived skins have a setActiveSidebarLink() function
 			$template->setActiveSidebarLink( $crumbs[1] );
 		} else {
@@ -109,7 +133,7 @@ function buildBreadcrumbs( $skin, $template ) {
 				}
 			}
 		}
-	 }
+	}
 
 	# Finally, see if we should change the site logo
 	# Don't go overboard with this... subtle is better.
@@ -181,7 +205,7 @@ function loadTemplate( $title ) {
 # restore escaped delimiter characters, add null elements until all optional
 # parameters are accounted for, and drop extra parameters
 function normalizeParameters( $input, $delimiter, $count ) {
-	 # Split the parameters into an array
+	# Split the parameters into an array
 	$params = explode( $delimiter, $input );
 	$output = array();
 	for ( $i = 0 ; $i < $count ; $i++ ) {
@@ -197,18 +221,18 @@ function translate_variable( $matches ) {
 
 	switch ( strtoupper($tag) ) {
 
-	case 'USERGROUPS':			 // @@USERGROUPS@@ pseudo-variable: Groups this user belongs to
-		if (!is_null($wgParser->mOutput)) {
-			$wgParser->disableCache(); // Mark this content as uncacheable
-		}
-		return( implode( ",", $wgUser->getGroups() ) );
+		case 'USERGROUPS':			 // @@USERGROUPS@@ pseudo-variable: Groups this user belongs to
+			if (!is_null($wgParser->mOutput)) {
+				$wgParser->disableCache(); // Mark this content as uncacheable
+			}
+			return( implode( ",", $wgUser->getGroups() ) );
 
-	case 'USERID':				 // @@USERID@@ pseudo-variable: User Name, blank if anonymous
-		if (!is_null($wgParser->mOutput)) {
-			$wgParser->disableCache(); // Mark this content as uncacheable
-		}
-		# getName() returns IP for anonymous users, so check if logged in first
-		return( $wgUser->isLoggedIn() ? $wgUser->getName() : '' );
+		case 'USERID':				 // @@USERID@@ pseudo-variable: User Name, blank if anonymous
+			if (!is_null($wgParser->mOutput)) {
+				$wgParser->disableCache(); // Mark this content as uncacheable
+			}
+			# getName() returns IP for anonymous users, so check if logged in first
+			return( $wgUser->isLoggedIn() ? $wgUser->getName() : '' );
 
 	}
 }
