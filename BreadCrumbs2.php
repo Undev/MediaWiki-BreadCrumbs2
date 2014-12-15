@@ -79,12 +79,13 @@ function buildBreadcrumbs($skin, $template)
 
 	$title = $skin->getRelevantTitle();
 
-	$breadcrumbHTML = '';
+	$breadcrumbHTML = Xml::openElement('div', array('id' => 'breadcrumbs2'));
 	foreach ($crumbs as $line) {
 		$breadcrumb = trim($line) . ' > ' . $title->getText();
-
-		$breadcrumbHTML .= Xml::openElement('p', array('id' => 'breadcrumbs2')) . $breadcrumb . Xml::closeElement('p');
+		$breadcrumbHTML .= Xml::openElement('div', array('class' => 'breadcrumb')) . $breadcrumb . Xml::closeElement('div');
 	}
+
+	$breadcrumbHTML .= Xml::closeElement('div');
 	$skin->getOutput()->prependHTML($breadcrumbHTML);
 
 	return true;
